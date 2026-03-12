@@ -12,6 +12,7 @@ interface Link {
   shortCode: string
   targetValue: string
   clickCount: number
+  status: string
   createdAt: string
 }
 
@@ -82,6 +83,40 @@ export default function DashboardPage() {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     router.push('/login')
+  }
+
+  const handleDelete = async (linkId: string) => {
+    if (!confirm('确定要删除这个短链接吗？此操作不可恢复。')) {
+      return
+    }
+
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/login')
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/links/${linkId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (res.ok) {
+        // 从列表中移除
+        setLinks(links.filter(link => link.id !== linkId))
+        // 更新统计
+        setStats(prev => ({
+          ...prev,
+          totalLinks: prev.totalLinks - 1
+        }))
+      } else {
+        alert('删除失败')
+      }
+    } catch (error) {
+      console.error('删除失败:', error)
+      alert('删除失败')
+    }
   }
 
   if (loading) {
@@ -159,7 +194,9 @@ export default function DashboardPage() {
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">短链接</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">目标</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">点击</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">状态</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">创建时间</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -178,7 +215,27 @@ export default function DashboardPage() {
                     <td className="px-4 py-3 text-sm whitespace-nowrap max-w-[150px] truncate">{link.targetValue}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{link.clickCount}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs rounded-full ${link.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {link.status === 'ACTIVE' ? '启用' : '禁用'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap">
                       {new Date(link.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap">
+                      <div className="flex gap-2">
+                        <Link href={`/dashboard/links/${link.id}/edit`}>
+                          <button className="text-blue-600 hover:text-blue-800 text-sm">
+                            编辑
+                          </button>
+                        </Link>
+                        <button 
+                          onClick={() => handleDelete(link.id)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          删除
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
