@@ -21,7 +21,7 @@ function getAuthUser(request: NextRequest) {
 // 获取单个链接详情
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { linkId: string } }
 ) {
   try {
     const user = getAuthUser(request)
@@ -31,7 +31,7 @@ export async function GET(
 
     const link = await prisma.shortLink.findFirst({
       where: {
-        id: params.id,
+        id: params.linkId,
         userId: user.userId,
       },
     })
@@ -50,7 +50,7 @@ export async function GET(
 // 更新链接
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { linkId: string } }
 ) {
   try {
     const user = getAuthUser(request)
@@ -61,7 +61,7 @@ export async function PUT(
     // 检查链接是否存在且属于当前用户
     const existingLink = await prisma.shortLink.findFirst({
       where: {
-        id: params.id,
+        id: params.linkId,
         userId: user.userId,
       },
     })
@@ -75,7 +75,7 @@ export async function PUT(
 
     // 更新链接
     const updatedLink = await prisma.shortLink.update({
-      where: { id: params.id },
+      where: { id: params.linkId },
       data: {
         targetType: data.targetType,
         targetValue: data.targetValue,
@@ -106,7 +106,7 @@ export async function PUT(
 // 删除链接
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { linkId: string } }
 ) {
   try {
     const user = getAuthUser(request)
@@ -117,7 +117,7 @@ export async function DELETE(
     // 检查链接是否存在且属于当前用户
     const existingLink = await prisma.shortLink.findFirst({
       where: {
-        id: params.id,
+        id: params.linkId,
         userId: user.userId,
       },
     })
@@ -128,7 +128,7 @@ export async function DELETE(
 
     // 删除链接（关联的访问记录会自动删除）
     await prisma.shortLink.delete({
-      where: { id: params.id },
+      where: { id: params.linkId },
     })
 
     return NextResponse.json({ message: '删除成功' })
