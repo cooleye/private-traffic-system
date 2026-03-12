@@ -97,7 +97,7 @@ export default function DashboardPage() {
     }
 
     try {
-      const res = await fetch(`/api/links/${linkId}?t=${Date.now()}`, {
+      const res = await fetch(`/api/links/manage/${linkId}?t=${Date.now()}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })

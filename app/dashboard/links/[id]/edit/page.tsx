@@ -58,7 +58,7 @@ export default function EditLinkPage() {
 
   const fetchLink = async (token: string) => {
     try {
-      const res = await fetch(`/api/links/${linkId}?t=${Date.now()}`, {
+      const res = await fetch(`/api/links/manage/${linkId}?t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
@@ -97,7 +97,7 @@ export default function EditLinkPage() {
     }
 
     try {
-      const res = await fetch(`/api/links/${linkId}?t=${Date.now()}`, {
+      const res = await fetch(`/api/links/manage/${linkId}?t=${Date.now()}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
