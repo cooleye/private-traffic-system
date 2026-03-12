@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  phone     String?  @unique
+  password  String
+  name      String?
+  avatar    String?
+  role      String   @default("USER")
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  shortLinks ShortLink[]
+  visitLogs  VisitLog[]
+  templates  Template[]
+
+  @@map("users")
+}
+
+model ShortLink {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  platform    String
+  shortCode   String   @unique @map("short_code")
+  targetType  String   @map("target_type")
+  targetValue String   @map("target_value")
+  title       String?
+  description String?
+  coverImage  String?  @map("cover_image")
+  status      String   @default("ACTIVE")
+  expiresAt   DateTime? @map("expires_at")
+  clickCount  Int      @default(0) @map("click_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visitLogs VisitLog[]
+
+  @@index([userId])
+  @@index([shortCode])
+  @@index([platform])
+  @@map("short_links")
+}
+
+model VisitLog {
+  id           String   @id @default(cuid())
+  shortLinkId  String   @map("short_link_id")
+  userId       String?  @map("user_id")
+  ipAddress    String   @map("ip_address")
+  userAgent    String   @map("user_agent")
+  deviceType   String?  @map("device_type")
+  os           String?
+  browser      String?
+  country      String?
+  province     String?
+  city         String?
+  referrer     String?
+  action       String   @default("VIEW")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  shortLink ShortLink @relation(fields: [shortLinkId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([shortLinkId])
+  @@index([createdAt])
+  @@map("visit_logs")
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  userId      String?  @map("user_id")
+  name        String
+  platform    String
+  title       String
+  description String?
+  coverImage  String?  @map("cover_image")
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([platform])
+  @@map("templates")
+}
