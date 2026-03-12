@@ -528,8 +528,29 @@ npx prisma db seed
 
 **GitHub提交**: [8a59bb9](https://github.com/cooleye/private-traffic-system/commit/8a59bb9)
 
+---
+
+#### 2026-03-13 - V1.1.0 密码重置功能
+**新增功能：**
+- ✅ **密码重置功能**: 邮箱验证重置密码
+  - 忘记密码页面 (/forgot-password)
+  - 重置密码页面 (/reset-password)
+  - 发送重置邮件 API
+  - 验证令牌和重置密码 API
+  - 登录页面添加"忘记密码"链接
+- ✅ **安全增强**: IP限流保护、令牌1小时有效期
+
+**技术实现：**
+- 数据库添加 resetToken 和 resetTokenExpireAt 字段
+- 使用随机32位令牌
+- 邮件发送使用控制台输出（开发环境）
+- TODO: 接入真实邮件服务（SendGrid/阿里云/AWS SES）
+
+**GitHub提交**: [cd93248](https://github.com/cooleye/private-traffic-system/commit/cd93248)
+
+---
+
 **待完成功能：**
-- ⏸️ 密码重置功能
 - ⏸️ 短链接编辑功能
 - ⏸️ 链接搜索筛选
 - ⏸️ 批量操作（删除/导出）
