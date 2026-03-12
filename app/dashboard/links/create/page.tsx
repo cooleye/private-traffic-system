@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import ShareCardPreview from '@/components/share/ShareCardPreview'
@@ -25,6 +25,7 @@ const targetTypes = [
 
 export default function CreateLinkPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     platform: 'DOUYIN',
     targetType: 'WECHAT_ID',
@@ -37,6 +38,24 @@ export default function CreateLinkPage() {
   const [loading, setLoading] = useState(false)
   const [createdLink, setCreatedLink] = useState<any>(null)
   const [qrcode, setQrcode] = useState('')
+
+  // 从 URL 参数导入模板数据
+  useEffect(() => {
+    const platform = searchParams.get('platform')
+    const title = searchParams.get('title')
+    const description = searchParams.get('description')
+    const coverImage = searchParams.get('coverImage')
+
+    if (platform || title || description || coverImage) {
+      setFormData(prev => ({
+        ...prev,
+        ...(platform && { platform }),
+        ...(title && { title }),
+        ...(description && { description }),
+        ...(coverImage && { coverImage }),
+      }))
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

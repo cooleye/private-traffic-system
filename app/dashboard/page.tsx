@@ -126,6 +126,9 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">我的短链接</h2>
           <div className="flex gap-3">
+            <Link href="/dashboard/templates">
+              <Button variant="outline">📋 模板库</Button>
+            </Link>
             <Link href="/dashboard/statistics">
               <Button variant="outline">📊 数据统计</Button>
             </Link>
