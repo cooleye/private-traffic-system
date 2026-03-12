@@ -8,16 +8,18 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  phone     String?  @unique
-  password  String
-  name      String?
-  avatar    String?
-  role      String   @default("USER")
-  status    String   @default("ACTIVE")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id             String    @id @default(cuid())
+  email          String    @unique
+  phone          String?   @unique
+  password       String
+  name           String?
+  avatar         String?
+  role           String    @default("USER")
+  status         String    @default("ACTIVE")
+  membershipType String    @default("TRIAL") @map("membership_type") // TRIAL, MONTHLY, QUARTERLY, YEARLY
+  membershipExpireAt DateTime? @map("membership_expire_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   shortLinks ShortLink[]
   visitLogs  VisitLog[]

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import UserMenu from '@/components/layout/UserMenu'
 
 interface Link {
   id: string
@@ -98,8 +99,12 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold">私域引流管理系统</h1>
           <div className="flex items-center gap-4">
-            <span className="text-gray-600">{user?.name || user?.email}</span>
-            <Button variant="outline" onClick={handleLogout}>退出</Button>
+            {user && (
+              <UserMenu 
+                user={user} 
+                onLogout={handleLogout}
+              />
+            )}
           </div>
         </div>
       </header>

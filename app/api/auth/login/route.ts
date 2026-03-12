@@ -69,7 +69,10 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         name: user.name,
+        avatar: user.avatar,
         role: user.role,
+        membershipType: user.membershipType,
+        membershipExpireAt: user.membershipExpireAt,
       },
     })
   } catch (error) {
