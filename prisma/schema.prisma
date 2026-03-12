@@ -18,6 +18,8 @@ model User {
   status         String    @default("ACTIVE")
   membershipType String    @default("TRIAL") @map("membership_type") // TRIAL, MONTHLY, QUARTERLY, YEARLY
   membershipExpireAt DateTime? @map("membership_expire_at")
+  resetToken     String?   @map("reset_token")
+  resetTokenExpireAt DateTime? @map("reset_token_expire_at")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
