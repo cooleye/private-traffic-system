@@ -125,9 +125,14 @@ export default function DashboardPage() {
         {/* Links Section */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">我的短链接</h2>
-          <Link href="/dashboard/links/create">
-            <Button className="bg-purple-600 hover:bg-purple-700">创建短链接</Button>
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/dashboard/statistics">
+              <Button variant="outline">📊 数据统计</Button>
+            </Link>
+            <Link href="/dashboard/links/create">
+              <Button className="bg-purple-600 hover:bg-purple-700">创建短链接</Button>
+            </Link>
+          </div>
         </div>
 
         {links.length === 0 ? (
