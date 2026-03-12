@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyPassword, generateToken } from '@/lib/auth'
+import { strictRateLimiter, getClientIP } from '@/lib/rateLimit'
 import { z } from 'zod'
 
 const loginSchema = z.object({
@@ -10,6 +11,21 @@ const loginSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // IP限流检查
+    const ip = getClientIP(request)
+    if (!strictRateLimiter.isAllowed(ip)) {
+      return NextResponse.json(
+        { error: '请求过于频繁，请稍后再试' },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': strictRateLimiter.getResetTime(ip).toString(),
+          }
+        }
+      )
+    }
+
     const body = await request.json()
     const { email, password } = loginSchema.parse(body)
 
