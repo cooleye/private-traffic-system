@@ -158,11 +158,23 @@ export default function CreateLinkPage() {
                   返回列表
                 </Button>
               </Link>
-              <Link href="/dashboard/links/create" className="flex-1">
-                <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                  再创建一个
-                </Button>
-              </Link>
+              <Button 
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                onClick={() => {
+                  setCreatedLink(null)
+                  setQrcode('')
+                  setFormData({
+                    platform: 'DOUYIN',
+                    targetType: 'WECHAT_ID',
+                    targetValue: '',
+                    title: '',
+                    description: '',
+                    coverImage: '',
+                  })
+                }}
+              >
+                再创建一个
+              </Button>
             </div>
           </div>
         </main>
