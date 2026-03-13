@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import UserMenu from '@/components/layout/UserMenu'
 import { useAuth } from '@/lib/useAuth'
+import ExportMenu from '@/components/export/ExportMenu'
 
 interface Link {
   id: string
@@ -237,6 +238,7 @@ export default function DashboardPage() {
             <Link href="/dashboard/statistics">
               <Button variant="outline">📊 数据统计</Button>
             </Link>
+            <ExportMenu />
             <Link href="/dashboard/links/create">
               <Button className="bg-purple-600 hover:bg-purple-700">创建短链接</Button>
             </Link>
