@@ -180,10 +180,12 @@ export async function GET(request: NextRequest) {
     }
 
     // 返回 CSV 文件
+    // 对中文文件名进行 URL 编码
+    const encodedFilename = encodeURIComponent(filename)
     return new NextResponse(content, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Disposition': `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`,
       },
     })
   } catch (error: any) {
