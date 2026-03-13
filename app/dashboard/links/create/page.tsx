@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import ShareCardPreview from '@/components/share/ShareCardPreview'
 
+// 配置为动态渲染
+export const dynamic = 'force-dynamic'
+
 const platforms = [
   { value: 'DOUYIN', label: '抖音' },
   { value: 'XIAOHONGSHU', label: '小红书' },
