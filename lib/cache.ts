@@ -40,11 +40,11 @@ class MemoryCache {
 
   private cleanup(): void {
     const now = Date.now()
-    for (const [key, item] of this.cache.entries()) {
+    this.cache.forEach((item, key) => {
       if (now > item.expiry) {
         this.cache.delete(key)
       }
-    }
+    })
   }
 }
 
