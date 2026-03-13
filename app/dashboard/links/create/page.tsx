@@ -1,13 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import ShareCardPreview from '@/components/share/ShareCardPreview'
-
-// 配置为动态渲染
-export const dynamic = 'force-dynamic'
 
 const platforms = [
   { value: 'DOUYIN', label: '抖音' },
@@ -26,7 +23,20 @@ const targetTypes = [
   { value: 'WEBSITE', label: '网站' },
 ]
 
-export default function CreateLinkPage() {
+// 加载状态组件
+function LoadingState() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">加载中...</p>
+      </div>
+    </div>
+  )
+}
+
+// 主要内容组件
+function CreateLinkContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
@@ -330,5 +340,14 @@ export default function CreateLinkPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+// 主页面组件
+export default function CreateLinkPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <CreateLinkContent />
+    </Suspense>
   )
 }
