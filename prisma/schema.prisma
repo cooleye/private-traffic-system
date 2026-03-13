@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = env("DB_PROVIDER")
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -89,9 +89,9 @@ model ConversionLog {
   ipAddress   String   @map("ip_address")
   userAgent   String   @map("user_agent")
   country     String?
-  province    String?
-  city        String?
-  createdAt   DateTime @default(now()) @map("created_at")
+  province     String?
+  city         String?
+  createdAt    DateTime @default(now()) @map("created_at")
 
   shortLink ShortLink @relation(fields: [shortLinkId], references: [id], onDelete: Cascade)
 
