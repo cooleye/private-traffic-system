@@ -36,6 +36,36 @@ const membershipBenefits: Record<string, string[]> = {
   YEARLY: ['无限短链接创建', '高级统计分析', '模板库使用', 'API接口访问', '专属客服支持', '自定义域名'],
 }
 
+// 头像组件，处理加载错误
+function Avatar({ src, alt, fallback }: { src?: string; alt: string; fallback: string }) {
+  const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  if (!src || error) {
+    return <span>{fallback}</span>
+  }
+
+  return (
+    <>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+          <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}
+        onLoad={() => setLoading(false)}
+        onError={() => {
+          setError(true)
+          setLoading(false)
+        }}
+      />
+    </>
+  )
+}
+
 export default function ProfilePage() {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
@@ -88,9 +118,13 @@ export default function ProfilePage() {
         setIsEditing(false)
         setMessage('个人信息更新成功')
         setTimeout(() => setMessage(''), 3000)
+      } else {
+        const errorData = await res.json()
+        setMessage(errorData.error || '更新失败')
       }
     } catch (error) {
       console.error('更新失败:', error)
+      setMessage('网络错误，请稍后重试')
     }
   }
 
@@ -176,7 +210,7 @@ export default function ProfilePage() {
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         {message && (
-          <div className="mb-4 p-4 bg-green-50 text-green-700 rounded-lg">
+          <div className={`mb-4 p-4 rounded-lg ${message.includes('成功') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
             {message}
           </div>
         )}
@@ -209,6 +243,18 @@ export default function ProfilePage() {
                       placeholder="https://example.com/avatar.jpg"
                       className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
+                    {editForm.avatar && (
+                      <div className="mt-2 flex items-center gap-3">
+                        <span className="text-sm text-gray-500">预览：</span>
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 relative">
+                          <Avatar
+                            src={editForm.avatar}
+                            alt="头像预览"
+                            fallback={getInitials(editForm.name || user.email)}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">昵称</label>
@@ -240,12 +286,12 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-medium overflow-hidden">
-                    {user.avatar ? (
-                      <img src={user.avatar} alt={user.name || user.email} className="w-full h-full object-cover" />
-                    ) : (
-                      <span>{getInitials(user.name || user.email)}</span>
-                    )}
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-medium overflow-hidden relative">
+                    <Avatar
+                      src={user.avatar}
+                      alt={user.name || user.email}
+                      fallback={getInitials(user.name || user.email)}
+                    />
                   </div>
                   <div>
                     <p className="text-lg font-medium">{user.name || '未设置昵称'}</p>
