@@ -36,6 +36,11 @@ interface StatisticsData {
   topLinks: { id: string; shortCode: string; title: string; platform: string; visits: number }[]
   provinceStats: { province: string; count: number }[]
   cityStats: { city: string; count: number }[]
+  conversionStats: {
+    funnel: { stage: string; count: number; rate: number }[]
+    totalConversion: number
+    conversionRate: number
+  }
 }
 
 const platformNames: Record<string, string> = {
@@ -147,7 +152,7 @@ export default function StatisticsPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* 概览卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm text-gray-600 mb-1">总访问量</p>
             <p className="text-3xl font-bold text-purple-600">{data.overview.totalVisits.toLocaleString()}</p>
@@ -163,6 +168,11 @@ export default function StatisticsPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm text-gray-600 mb-1">平均访问/链接</p>
             <p className="text-3xl font-bold text-orange-600">{data.overview.avgVisitsPerLink}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-sm text-gray-600 mb-1">转化率</p>
+            <p className="text-3xl font-bold text-red-600">{data.conversionStats?.conversionRate || 0}%</p>
+            <p className="text-xs text-gray-500 mt-1">{data.conversionStats?.totalConversion || 0} 次转化</p>
           </div>
         </div>
 
@@ -260,6 +270,35 @@ export default function StatisticsPage() {
             </div>
           </div>
         </div>
+
+        {/* 转化漏斗 */}
+        {data.conversionStats && (
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 className="text-lg font-bold mb-4">转化漏斗</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {data.conversionStats.funnel.map((stage, index) => (
+                <div key={stage.stage} className="relative">
+                  <div className={`p-4 rounded-lg ${
+                    index === 0 ? 'bg-blue-50' :
+                    index === 1 ? 'bg-purple-50' :
+                    'bg-green-50'
+                  }`}>
+                    <p className="text-sm text-gray-600">{stage.stage}</p>
+                    <p className="text-2xl font-bold">{stage.count.toLocaleString()}</p>
+                    <p className="text-sm text-gray-500">转化率: {stage.rate}%</p>
+                  </div>
+                  {index < data.conversionStats.funnel.length - 1 && (
+                    <div className="hidden md:flex absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 z-10">
+                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 地域分布 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

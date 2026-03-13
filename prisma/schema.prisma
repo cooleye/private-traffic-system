@@ -43,11 +43,13 @@ model ShortLink {
   status      String   @default("ACTIVE")
   expiresAt   DateTime? @map("expires_at")
   clickCount  Int      @default(0) @map("click_count")
+  conversionCount Int  @default(0) @map("conversion_count")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   visitLogs VisitLog[]
+  conversionLogs ConversionLog[]
 
   @@index([userId])
   @@index([shortCode])
@@ -77,6 +79,26 @@ model VisitLog {
   @@index([shortLinkId])
   @@index([createdAt])
   @@map("visit_logs")
+}
+
+model ConversionLog {
+  id          String   @id @default(cuid())
+  shortLinkId String   @map("short_link_id")
+  action      String   // VIEW, COPY, ADD_SUCCESS
+  sessionId   String   @map("session_id")
+  ipAddress   String   @map("ip_address")
+  userAgent   String   @map("user_agent")
+  country     String?
+  province    String?
+  city        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  shortLink ShortLink @relation(fields: [shortLinkId], references: [id], onDelete: Cascade)
+
+  @@index([shortLinkId])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("conversion_logs")
 }
 
 model Template {

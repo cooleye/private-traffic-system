@@ -80,6 +80,12 @@ export async function GET(request: NextRequest) {
       createdAt: { gte: startDate },
     }
 
+    // 构建转化查询条件
+    const conversionWhere: any = {
+      shortLinkId: { in: linkIds },
+      createdAt: { gte: startDate },
+    }
+
     // 并行查询所有统计数据
     const [
       totalVisits,
@@ -93,6 +99,7 @@ export async function GET(request: NextRequest) {
       topLinksRaw,
       provinceStatsRaw,
       cityStatsRaw,
+      conversionStatsRaw,
     ] = await Promise.all([
       // 总访问量
       prisma.visitLog.count({ where: visitWhere }),
@@ -177,6 +184,13 @@ export async function GET(request: NextRequest) {
         where: visitWhere,
         _count: { id: true },
       }),
+
+      // 转化统计
+      prisma.conversionLog.groupBy({
+        by: ['action'],
+        where: conversionWhere,
+        _count: { id: true },
+      }),
     ])
 
     // 处理平台统计
@@ -246,6 +260,26 @@ export async function GET(request: NextRequest) {
       .sort((a: any, b: any) => b.count - a.count)
       .slice(0, 15)
 
+    // 处理转化统计
+    const conversionMap = new Map()
+    conversionStatsRaw.forEach((stat: any) => {
+      conversionMap.set(stat.action, stat._count.id)
+    })
+    
+    const viewCount = conversionMap.get('VIEW') || 0
+    const copyCount = conversionMap.get('COPY') || 0
+    const addSuccessCount = conversionMap.get('ADD_SUCCESS') || 0
+    
+    const conversionStats = {
+      funnel: [
+        { stage: '点击链接', count: viewCount, rate: 100 },
+        { stage: '复制信息', count: copyCount, rate: viewCount > 0 ? Math.round((copyCount / viewCount) * 100) : 0 },
+        { stage: '添加成功', count: addSuccessCount, rate: viewCount > 0 ? Math.round((addSuccessCount / viewCount) * 100) : 0 },
+      ],
+      totalConversion: addSuccessCount,
+      conversionRate: viewCount > 0 ? Math.round((addSuccessCount / viewCount) * 100) : 0,
+    }
+
     const result = {
       overview: {
         totalVisits,
@@ -262,6 +296,7 @@ export async function GET(request: NextRequest) {
       topLinks,
       provinceStats,
       cityStats,
+      conversionStats,
     }
 
     // 缓存结果（5分钟）
