@@ -11,6 +11,8 @@ interface Link {
   title: string | null
   description: string | null
   clickCount: number
+  status: string
+  expiresAt: string | null
 }
 
 export default function ShortLinkPage() {
@@ -35,7 +37,23 @@ export default function ShortLinkPage() {
       }
 
       const data = await res.json()
-      setLink(data.link)
+      const linkData: Link = data.link
+
+      // 检查链接状态
+      if (linkData.status === 'INACTIVE') {
+        setError('该链接已被禁用')
+        setLoading(false)
+        return
+      }
+
+      // 检查是否过期
+      if (linkData.expiresAt && new Date(linkData.expiresAt) < new Date()) {
+        setError('该链接已过期')
+        setLoading(false)
+        return
+      }
+
+      setLink(linkData)
       setLoading(false)
 
       // 记录访问
@@ -43,7 +61,7 @@ export default function ShortLinkPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          linkId: data.link.id,
+          linkId: linkData.id,
           action: 'VIEW',
         }),
       }).catch(console.error)
@@ -53,7 +71,7 @@ export default function ShortLinkPage() {
         setCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(timer)
-            handleRedirect(data.link)
+            handleRedirect(linkData)
             return 0
           }
           return prev - 1
@@ -127,7 +145,7 @@ export default function ShortLinkPage() {
       <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full text-center">
           <div className="text-6xl mb-4">😕</div>
-          <h1 className="text-2xl font-bold mb-2">链接不存在</h1>
+          <h1 className="text-2xl font-bold mb-2">链接不可用</h1>
           <p className="text-gray-600">{error || '该链接已失效或不存在'}</p>
         </div>
       </div>

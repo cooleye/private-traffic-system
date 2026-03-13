@@ -33,6 +33,7 @@ export default function CreateLinkPage() {
     title: '',
     description: '',
     coverImage: '',
+    expiresAt: '',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -159,22 +160,23 @@ export default function CreateLinkPage() {
                 </Button>
               </Link>
               <Button 
-                className="flex-1 bg-purple-600 hover:bg-purple-700"
-                onClick={() => {
-                  setCreatedLink(null)
-                  setQrcode('')
-                  setFormData({
-                    platform: 'DOUYIN',
-                    targetType: 'WECHAT_ID',
-                    targetValue: '',
-                    title: '',
-                    description: '',
-                    coverImage: '',
-                  })
-                }}
-              >
-                再创建一个
-              </Button>
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  onClick={() => {
+                    setCreatedLink(null)
+                    setQrcode('')
+                    setFormData({
+                      platform: 'DOUYIN',
+                      targetType: 'WECHAT_ID',
+                      targetValue: '',
+                      title: '',
+                      description: '',
+                      coverImage: '',
+                      expiresAt: '',
+                    })
+                  }}
+                >
+                  再创建一个
+                </Button>
             </div>
           </div>
         </main>
@@ -281,6 +283,19 @@ export default function CreateLinkPage() {
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">建议使用 1200×630 像素的图片</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  过期时间（可选）
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.expiresAt}
+                  onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">设置后链接将在指定时间自动失效</p>
               </div>
 
               <div className="flex gap-4 pt-4">

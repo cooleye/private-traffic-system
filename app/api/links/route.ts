@@ -11,6 +11,7 @@ const createLinkSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
   coverImage: z.string().optional(),
+  expiresAt: z.string().optional(),
 })
 
 function getAuthUser(request: NextRequest) {
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
         coverImage: data.coverImage,
         shortCode,
         userId: user.userId,
+        ...(data.expiresAt && { expiresAt: new Date(data.expiresAt) }),
       },
     })
 
