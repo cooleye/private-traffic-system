@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import UserMenu from '@/components/layout/UserMenu'
+import { useAuth } from '@/lib/useAuth'
 
 interface Link {
   id: string
@@ -41,6 +42,7 @@ const sortOptions = [
 
 export default function DashboardPage() {
   const router = useRouter()
+  useAuth() // 启用Token自动刷新
   const [links, setLinks] = useState<Link[]>([])
   const [stats, setStats] = useState<Stats>({ totalVisits: 0, totalLinks: 0 })
   const [loading, setLoading] = useState(true)
@@ -150,6 +152,7 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
     router.push('/login')
   }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyPassword, generateToken } from '@/lib/auth'
+import { verifyPassword, generateToken, generateRefreshToken } from '@/lib/auth'
 import { strictRateLimiter, getClientIP } from '@/lib/rateLimit'
 import { z } from 'zod'
 
@@ -62,9 +62,14 @@ export async function POST(request: NextRequest) {
       role: user.role,
     })
 
+    const refreshToken = generateRefreshToken({
+      userId: user.id,
+    })
+
     return NextResponse.json({
       message: '登录成功',
       token,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
