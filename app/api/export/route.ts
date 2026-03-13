@@ -25,6 +25,9 @@ function generateCSV(data: any[], headers: string[], fields: string[]): string {
   return [headers.join(','), ...rows].join('\n')
 }
 
+// 配置为动态路由
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '')

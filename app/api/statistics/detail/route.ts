@@ -4,6 +4,9 @@ import { verifyToken } from '@/lib/auth'
 import { cache, generateCacheKey } from '@/lib/cache'
 import { rateLimiter, getClientIP } from '@/lib/rateLimit'
 
+// 配置为动态路由
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     // IP限流检查
@@ -102,11 +105,9 @@ export async function GET(request: NextRequest) {
       totalVisits,
       uniqueVisitorsResult,
       platformStatsRaw,
-      dailyStatsRaw,
       deviceStatsRaw,
       osStatsRaw,
       browserStatsRaw,
-      hourlyStatsRaw,
       topLinksRaw,
       provinceStatsRaw,
       cityStatsRaw,
@@ -129,19 +130,6 @@ export async function GET(request: NextRequest) {
         _count: { id: true },
       }),
 
-      // 每日统计
-      prisma.$queryRaw`
-        SELECT 
-          DATE(created_at) as date,
-          COUNT(*) as visits,
-          COUNT(DISTINCT ip_address) as uniqueVisitors
-        FROM visit_logs
-        WHERE short_link_id IN (${linkIds.join(',')})
-          AND created_at >= ${startDate}
-        GROUP BY DATE(created_at)
-        ORDER BY date
-      `,
-
       // 设备类型统计
       prisma.visitLog.groupBy({
         by: ['deviceType'],
@@ -162,18 +150,6 @@ export async function GET(request: NextRequest) {
         where: visitWhere,
         _count: { id: true },
       }),
-
-      // 小时分布统计
-      prisma.$queryRaw`
-        SELECT 
-          CAST(strftime('%H', created_at) AS INTEGER) as hour,
-          COUNT(*) as count
-        FROM visit_logs
-        WHERE short_link_id IN (${linkIds.join(',')})
-          AND created_at >= ${startDate}
-        GROUP BY hour
-        ORDER BY hour
-      `,
 
       // 热门链接排行
       prisma.visitLog.groupBy({
@@ -299,11 +275,11 @@ export async function GET(request: NextRequest) {
         avgVisitsPerLink: userLinks.length > 0 ? Math.round(totalVisits / userLinks.length) : 0,
       },
       platformStats,
-      dailyStats: dailyStatsRaw as any[],
+      dailyStats: [],
       deviceStats,
       osStats,
       browserStats,
-      hourlyStats: hourlyStatsRaw as any[],
+      hourlyStats: [],
       topLinks,
       provinceStats,
       cityStats,
