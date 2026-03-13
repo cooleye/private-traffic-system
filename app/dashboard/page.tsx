@@ -23,6 +23,13 @@ interface Stats {
   totalLinks: number
 }
 
+interface Pagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
 const platforms = [
   { value: '', label: '全部平台' },
   { value: 'DOUYIN', label: '抖音' },
@@ -55,6 +62,14 @@ export default function DashboardPage() {
   const [status, setStatus] = useState('')
   const [sortBy, setSortBy] = useState('createdAt-desc')
 
+  // 分页状态
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  })
+
   useEffect(() => {
     const token = localStorage.getItem('token')
     const userData = localStorage.getItem('user')
@@ -71,14 +86,18 @@ export default function DashboardPage() {
     fetchData(token)
   }, [router])
 
-  const fetchData = async (token: string, searchParams?: URLSearchParams) => {
+  const fetchData = async (token: string, searchParams?: URLSearchParams, pageNum?: number) => {
     try {
       setLoading(true)
-      
+
       // 构建查询参数
       const params = searchParams || new URLSearchParams()
+      if (pageNum) {
+        params.set('page', pageNum.toString())
+      }
+      params.set('limit', pagination.limit.toString())
       const url = `/api/links?${params.toString()}`
-      
+
       // 获取链接列表
       const linksRes = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -95,6 +114,7 @@ export default function DashboardPage() {
 
       const linksData = await linksRes.json()
       setLinks(linksData.links)
+      setPagination(linksData.pagination)
 
       // 获取统计数据
       const statsRes = await fetch('/api/statistics', {
@@ -118,17 +138,36 @@ export default function DashboardPage() {
     if (!token) return
 
     const params = new URLSearchParams()
-    
+
     if (keyword) params.set('keyword', keyword)
     if (platform) params.set('platform', platform)
     if (status) params.set('status', status)
-    
+
     const [sortField, sortOrder] = sortBy.split('-')
     params.set('sortBy', sortField)
     params.set('sortOrder', sortOrder)
 
-    fetchData(token, params)
+    // 搜索时重置到第一页
+    setPagination(prev => ({ ...prev, page: 1 }))
+    fetchData(token, params, 1)
   }, [keyword, platform, status, sortBy])
+
+  // 切换页码
+  const handlePageChange = (pageNum: number) => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    const params = new URLSearchParams()
+    if (keyword) params.set('keyword', keyword)
+    if (platform) params.set('platform', platform)
+    if (status) params.set('status', status)
+    const [sortField, sortOrder] = sortBy.split('-')
+    params.set('sortBy', sortField)
+    params.set('sortOrder', sortOrder)
+
+    setPagination(prev => ({ ...prev, page: pageNum }))
+    fetchData(token, params, pageNum)
+  }
 
   // 重置筛选
   const handleReset = () => {
@@ -323,62 +362,102 @@ export default function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-x-auto">
-            <table className="w-full min-w-[800px]">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">平台</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">短链接</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">目标</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">点击</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">状态</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">创建时间</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">操作</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {links.map((link) => (
-                  <tr key={link.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm whitespace-nowrap">{link.platform}</td>
-                    <td className="px-4 py-3 text-sm whitespace-nowrap">
-                      <a 
-                        href={`/l/${link.shortCode}`} 
-                        target="_blank"
-                        className="text-purple-600 hover:underline"
-                      >
-                        {link.shortCode}
-                      </a>
-                    </td>
-                    <td className="px-4 py-3 text-sm whitespace-nowrap max-w-[150px] truncate">{link.targetValue}</td>
-                    <td className="px-4 py-3 text-sm whitespace-nowrap">{link.clickCount}</td>
-                    <td className="px-4 py-3 text-sm whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${link.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                        {link.status === 'ACTIVE' ? '启用' : '禁用'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm whitespace-nowrap">
-                      {new Date(link.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-sm whitespace-nowrap">
-                      <div className="flex gap-2">
-                        <Link href={`/dashboard/links/${link.id}/edit`}>
-                          <button className="text-blue-600 hover:text-blue-800 text-sm">
-                            编辑
-                          </button>
-                        </Link>
-                        <button 
-                          onClick={() => handleDelete(link.id)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          删除
-                        </button>
-                      </div>
-                    </td>
+          <>
+            <div className="bg-white rounded-lg shadow overflow-x-auto">
+              <table className="w-full min-w-[800px]">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">平台</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">短链接</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">目标</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">点击</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">状态</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">创建时间</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">操作</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {links.map((link) => (
+                    <tr key={link.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">{link.platform}</td>
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">
+                        <a
+                          href={`/l/${link.shortCode}`}
+                          target="_blank"
+                          className="text-purple-600 hover:underline"
+                        >
+                          {link.shortCode}
+                        </a>
+                      </td>
+                      <td className="px-4 py-3 text-sm whitespace-nowrap max-w-[150px] truncate">{link.targetValue}</td>
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">{link.clickCount}</td>
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs rounded-full ${link.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {link.status === 'ACTIVE' ? '启用' : '禁用'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">
+                        {new Date(link.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">
+                        <div className="flex gap-2">
+                          <Link href={`/dashboard/links/${link.id}/edit`}>
+                            <button className="text-blue-600 hover:text-blue-800 text-sm">
+                              编辑
+                            </button>
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(link.id)}
+                            className="text-red-600 hover:text-red-800 text-sm"
+                          >
+                            删除
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 分页 */}
+            {pagination.totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-between">
+                <p className="text-sm text-gray-600">
+                  共 {pagination.total} 条，第 {pagination.page}/{pagination.totalPages} 页
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={pagination.page <= 1}
+                    className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    上一页
+                  </button>
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`px-4 py-2 border rounded-lg text-sm ${
+                        pagination.page === pageNum
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={pagination.page >= pagination.totalPages}
+                    className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    下一页
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

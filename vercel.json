@@ -3,13 +3,5 @@
   "buildCommand": "prisma generate && prisma migrate deploy && next build",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["hkg1"],
-  "env": {
-    "DB_PROVIDER": "postgresql"
-  },
-  "build": {
-    "env": {
-      "DB_PROVIDER": "postgresql"
-    }
-  }
+  "regions": ["hkg1"]
 }
