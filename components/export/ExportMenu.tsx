@@ -48,10 +48,21 @@ export default function ExportMenu() {
         return
       }
 
-      // 获取文件名
+      // 获取文件名（优先使用 filename* 解码后的值）
       const contentDisposition = res.headers.get('content-disposition')
-      const filenameMatch = contentDisposition?.match(/filename="(.+)"/) 
-      const filename = filenameMatch ? filenameMatch[1] : `导出数据_${new Date().toISOString().split('T')[0]}.csv`
+      let filename = `导出数据_${new Date().toISOString().split('T')[0]}.csv`
+      
+      // 尝试从 filename* 获取（RFC 5987 格式：filename*=UTF-8''encoded）
+      const filenameStarMatch = contentDisposition?.match(/filename\*=UTF-8''(.+)/)
+      if (filenameStarMatch) {
+        filename = decodeURIComponent(filenameStarMatch[1])
+      } else {
+        // 回退到普通 filename
+        const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
+        if (filenameMatch) {
+          filename = decodeURIComponent(filenameMatch[1])
+        }
+      }
 
       // 下载文件
       const blob = await res.blob()
