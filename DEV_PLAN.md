@@ -571,8 +571,24 @@ npx prisma db seed
 
 ---
 
+#### 2026-03-13 - V1.3.0 链接搜索筛选功能
+**新增功能：**
+- ✅ **链接搜索筛选**: Dashboard 支持多维度筛选
+  - 关键词搜索（标题、描述、目标值、短码）
+  - 平台筛选（7个平台）
+  - 状态筛选（启用/禁用）
+  - 排序功能（创建时间、点击量）
+- ✅ **自动搜索**: 输入防抖300ms自动搜索
+- ✅ **重置筛选**: 一键重置所有筛选条件
+
+**API更新：**
+- `GET /api/links?keyword=&platform=&status=&sortBy=&sortOrder=` - 支持筛选参数
+
+**GitHub提交**: [1fce3ed](https://github.com/cooleye/private-traffic-system/commit/1fce3ed)
+
+---
+
 **待完成功能：**
-- ⏸️ 链接搜索筛选
 - ⏸️ 批量操作（删除/导出）
 - ⏸️ Token刷新机制
 - ⏸️ 地域分布统计
