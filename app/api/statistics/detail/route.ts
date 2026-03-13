@@ -91,6 +91,8 @@ export async function GET(request: NextRequest) {
       browserStatsRaw,
       hourlyStatsRaw,
       topLinksRaw,
+      provinceStatsRaw,
+      cityStatsRaw,
     ] = await Promise.all([
       // 总访问量
       prisma.visitLog.count({ where: visitWhere }),
@@ -161,6 +163,20 @@ export async function GET(request: NextRequest) {
         where: visitWhere,
         _count: { id: true },
       }),
+
+      // 省份统计
+      prisma.visitLog.groupBy({
+        by: ['province'],
+        where: visitWhere,
+        _count: { id: true },
+      }),
+
+      // 城市统计
+      prisma.visitLog.groupBy({
+        by: ['city'],
+        where: visitWhere,
+        _count: { id: true },
+      }),
     ])
 
     // 处理平台统计
@@ -210,6 +226,26 @@ export async function GET(request: NextRequest) {
       .sort((a: any, b: any) => b.visits - a.visits)
       .slice(0, 10)
 
+    // 处理省份统计
+    const provinceStats = provinceStatsRaw
+      .filter((s: any) => s.province && s.province !== '未知' && s.province !== '本地')
+      .map((s: any) => ({
+        province: s.province,
+        count: s._count.id,
+      }))
+      .sort((a: any, b: any) => b.count - a.count)
+      .slice(0, 15)
+
+    // 处理城市统计
+    const cityStats = cityStatsRaw
+      .filter((s: any) => s.city && s.city !== '未知' && s.city !== '本地')
+      .map((s: any) => ({
+        city: s.city,
+        count: s._count.id,
+      }))
+      .sort((a: any, b: any) => b.count - a.count)
+      .slice(0, 15)
+
     const result = {
       overview: {
         totalVisits,
@@ -224,6 +260,8 @@ export async function GET(request: NextRequest) {
       browserStats,
       hourlyStats: hourlyStatsRaw as any[],
       topLinks,
+      provinceStats,
+      cityStats,
     }
 
     // 缓存结果（5分钟）

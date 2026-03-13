@@ -34,6 +34,8 @@ interface StatisticsData {
   browserStats: { browser: string; count: number }[]
   hourlyStats: { hour: number; count: number }[]
   topLinks: { id: string; shortCode: string; title: string; platform: string; visits: number }[]
+  provinceStats: { province: string; count: number }[]
+  cityStats: { city: string; count: number }[]
 }
 
 const platformNames: Record<string, string> = {
@@ -253,6 +255,41 @@ export default function StatisticsPage() {
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="count" name="访问量" fill="#667eea" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* 地域分布 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* 省份分布 */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold mb-4">省份分布 TOP15</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.provinceStats} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis dataKey="province" type="category" width={60} />
+                  <Tooltip />
+                  <Bar dataKey="count" name="访问量" fill="#667eea" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* 城市分布 */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold mb-4">城市分布 TOP15</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.cityStats} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis dataKey="city" type="category" width={60} />
+                  <Tooltip />
+                  <Bar dataKey="count" name="访问量" fill="#764ba2" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getGeoByIP } from '@/lib/geo'
 import { z } from 'zod'
 
 const trackSchema = z.object({
@@ -22,6 +23,9 @@ export async function POST(request: NextRequest) {
     // 解析User Agent
     const deviceInfo = parseUserAgent(userAgent)
 
+    // 获取地域信息
+    const geoInfo = getGeoByIP(ipAddress.toString())
+
     // 创建访问记录
     await prisma.visitLog.create({
       data: {
@@ -31,6 +35,9 @@ export async function POST(request: NextRequest) {
         deviceType: deviceInfo.deviceType,
         os: deviceInfo.os,
         browser: deviceInfo.browser,
+        country: geoInfo.country,
+        province: geoInfo.province,
+        city: geoInfo.city,
         referrer,
         action,
       },
