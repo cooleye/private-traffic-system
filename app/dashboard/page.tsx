@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -21,12 +21,36 @@ interface Stats {
   totalLinks: number
 }
 
+const platforms = [
+  { value: '', label: '全部平台' },
+  { value: 'DOUYIN', label: '抖音' },
+  { value: 'XIAOHONGSHU', label: '小红书' },
+  { value: 'KUAISHOU', label: '快手' },
+  { value: 'WECHAT', label: '微信' },
+  { value: 'QQ', label: 'QQ' },
+  { value: 'WEIBO', label: '微博' },
+  { value: 'BILIBILI', label: 'B站' },
+]
+
+const sortOptions = [
+  { value: 'createdAt-desc', label: '最新创建' },
+  { value: 'createdAt-asc', label: '最早创建' },
+  { value: 'clickCount-desc', label: '点击量高' },
+  { value: 'clickCount-asc', label: '点击量低' },
+]
+
 export default function DashboardPage() {
   const router = useRouter()
   const [links, setLinks] = useState<Link[]>([])
   const [stats, setStats] = useState<Stats>({ totalVisits: 0, totalLinks: 0 })
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+
+  // 搜索筛选状态
+  const [keyword, setKeyword] = useState('')
+  const [platform, setPlatform] = useState('')
+  const [status, setStatus] = useState('')
+  const [sortBy, setSortBy] = useState('createdAt-desc')
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -44,10 +68,16 @@ export default function DashboardPage() {
     fetchData(token)
   }, [router])
 
-  const fetchData = async (token: string) => {
+  const fetchData = async (token: string, searchParams?: URLSearchParams) => {
     try {
+      setLoading(true)
+      
+      // 构建查询参数
+      const params = searchParams || new URLSearchParams()
+      const url = `/api/links?${params.toString()}`
+      
       // 获取链接列表
-      const linksRes = await fetch('/api/links', {
+      const linksRes = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
@@ -79,6 +109,45 @@ export default function DashboardPage() {
     }
   }
 
+  // 执行搜索
+  const handleSearch = useCallback(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    const params = new URLSearchParams()
+    
+    if (keyword) params.set('keyword', keyword)
+    if (platform) params.set('platform', platform)
+    if (status) params.set('status', status)
+    
+    const [sortField, sortOrder] = sortBy.split('-')
+    params.set('sortBy', sortField)
+    params.set('sortOrder', sortOrder)
+
+    fetchData(token, params)
+  }, [keyword, platform, status, sortBy])
+
+  // 重置筛选
+  const handleReset = () => {
+    setKeyword('')
+    setPlatform('')
+    setStatus('')
+    setSortBy('createdAt-desc')
+    
+    const token = localStorage.getItem('token')
+    if (token) {
+      fetchData(token)
+    }
+  }
+
+  // 监听筛选变化自动搜索
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleSearch()
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [keyword, platform, status, sortBy])
+
   const handleLogout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
@@ -103,9 +172,7 @@ export default function DashboardPage() {
       })
 
       if (res.ok) {
-        // 从列表中移除
         setLinks(links.filter(link => link.id !== linkId))
-        // 更新统计
         setStats(prev => ({
           ...prev,
           totalLinks: prev.totalLinks - 1
@@ -119,7 +186,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading) {
+  if (loading && links.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">加载中...</div>
@@ -144,10 +211,9 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm text-gray-600 mb-1">总访问量</p>
             <p className="text-3xl font-bold text-purple-600">{stats.totalVisits}</p>
@@ -155,10 +221,6 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm text-gray-600 mb-1">短链接数</p>
             <p className="text-3xl font-bold text-blue-600">{stats.totalLinks}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600 mb-1">今日访问</p>
-            <p className="text-3xl font-bold text-green-600">-</p>
           </div>
         </div>
 
@@ -178,16 +240,86 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* 搜索筛选区域 */}
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* 关键词搜索 */}
+            <div className="lg:col-span-2">
+              <input
+                type="text"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="搜索标题、描述、目标值、短码..."
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            {/* 平台筛选 */}
+            <div>
+              <select
+                value={platform}
+                onChange={(e) => setPlatform(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                {platforms.map((p) => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* 状态筛选 */}
+            <div>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">全部状态</option>
+                <option value="ACTIVE">启用</option>
+                <option value="INACTIVE">禁用</option>
+              </select>
+            </div>
+
+            {/* 排序 */}
+            <div>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                {sortOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* 重置按钮 */}
+          {(keyword || platform || status || sortBy !== 'createdAt-desc') && (
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={handleReset}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                重置筛选
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Links Table */}
         {links.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-500 mb-4">还没有创建短链接</p>
+            <p className="text-gray-500 mb-4">暂无短链接</p>
             <Link href="/dashboard/links/create">
-              <Button className="bg-purple-600 hover:bg-purple-700">创建第一个短链接</Button>
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                创建第一个短链接
+              </Button>
             </Link>
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow overflow-x-auto">
-            <table className="w-full min-w-[600px]">
+            <table className="w-full min-w-[800px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap">平台</th>

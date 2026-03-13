@@ -30,16 +30,50 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const platform = searchParams.get('platform')
+    const status = searchParams.get('status')
+    const keyword = searchParams.get('keyword')
+    const sortBy = searchParams.get('sortBy') || 'createdAt'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
 
-    const where = {
+    // 构建查询条件
+    const where: any = {
       userId: user.userId,
-      ...(platform && { platform }),
+    }
+
+    // 平台筛选
+    if (platform) {
+      where.platform = platform
+    }
+
+    // 状态筛选
+    if (status) {
+      where.status = status
+    }
+
+    // 关键词搜索（搜索标题、描述、目标值、短码）
+    if (keyword) {
+      where.OR = [
+        { title: { contains: keyword, mode: 'insensitive' } },
+        { description: { contains: keyword, mode: 'insensitive' } },
+        { targetValue: { contains: keyword, mode: 'insensitive' } },
+        { shortCode: { contains: keyword, mode: 'insensitive' } },
+      ]
+    }
+
+    // 构建排序条件
+    const orderBy: any = {}
+    if (sortBy === 'clickCount') {
+      orderBy.clickCount = sortOrder
+    } else if (sortBy === 'title') {
+      orderBy.title = sortOrder
+    } else {
+      orderBy.createdAt = sortOrder
     }
 
     const [links, total] = await Promise.all([
       prisma.shortLink.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
       }),
