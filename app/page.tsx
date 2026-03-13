@@ -20,7 +20,7 @@ export default function Home() {
               </Button>
             </Link>
             <Link href="/register">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button size="lg" className="border border-white bg-transparent text-white hover:bg-white/10">
                 注册账号
               </Button>
             </Link>

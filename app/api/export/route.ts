@@ -186,8 +186,10 @@ export async function GET(request: NextRequest) {
         'Content-Disposition': `attachment; filename="${filename}"`,
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('导出数据失败:', error)
-    return NextResponse.json({ error: '导出失败' }, { status: 500 })
+    console.error('错误详情:', error.message)
+    console.error('错误堆栈:', error.stack)
+    return NextResponse.json({ error: '导出失败: ' + error.message }, { status: 500 })
   }
 }
