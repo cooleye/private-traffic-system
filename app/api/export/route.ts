@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
           createdAt: new Date(link.createdAt).toLocaleString(),
         }))
         
-        filename = `短链接数据_${new Date().toISOString().split('T')[0]}.csv`
+        filename = `links_${new Date().toISOString().split('T')[0]}.csv`
         content = generateCSV(
           data,
           ['短码', '平台', '目标类型', '目标值', '标题', '描述', '状态', '点击量', '转化量', '过期时间', '创建时间'],
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
           createdAt: new Date(visit.createdAt).toLocaleString(),
         }))
         
-        filename = `访问记录_${new Date().toISOString().split('T')[0]}.csv`
+        filename = `visits_${new Date().toISOString().split('T')[0]}.csv`
         content = generateCSV(
           data,
           ['短码', 'IP地址', '设备类型', '操作系统', '浏览器', '国家', '省份', '城市', '行为', '访问时间'],
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
           createdAt: new Date(conv.createdAt).toLocaleString(),
         }))
         
-        filename = `转化记录_${new Date().toISOString().split('T')[0]}.csv`
+        filename = `conversions_${new Date().toISOString().split('T')[0]}.csv`
         content = generateCSV(
           data,
           ['短码', '会话ID', '行为', 'IP地址', '国家', '省份', '城市', '时间'],
@@ -170,7 +170,7 @@ export async function GET(request: NextRequest) {
           createdAt: new Date(link.createdAt).toLocaleString(),
         }))
         
-        filename = `统计数据_${new Date().toISOString().split('T')[0]}.csv`
+        filename = `statistics_${new Date().toISOString().split('T')[0]}.csv`
         content = generateCSV(
           data,
           ['短码', '平台', '标题', '点击量', '转化量', '转化率', '状态', '创建时间'],
