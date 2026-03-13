@@ -69,6 +69,17 @@ export async function GET(request: NextRequest) {
         browserStats: [],
         hourlyStats: [],
         topLinks: [],
+        provinceStats: [],
+        cityStats: [],
+        conversionStats: {
+          funnel: [
+            { stage: '点击链接', count: 0, rate: 100 },
+            { stage: '复制信息', count: 0, rate: 0 },
+            { stage: '添加成功', count: 0, rate: 0 },
+          ],
+          totalConversion: 0,
+          conversionRate: 0,
+        },
       }
       cache.set(cacheKey, emptyResult, 60 * 1000) // 缓存1分钟
       return NextResponse.json(emptyResult)
