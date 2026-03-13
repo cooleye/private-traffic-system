@@ -9,7 +9,7 @@ const REFRESH_INTERVAL = 30 * 60 * 1000
 
 export function useAuth() {
   const router = useRouter()
-  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const refreshTimeoutRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // 刷新Token
   const refreshToken = useCallback(async () => {

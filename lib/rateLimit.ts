@@ -63,11 +63,11 @@ class RateLimiter {
 
   private cleanup(): void {
     const now = Date.now()
-    for (const [ip, record] of this.records.entries()) {
+    this.records.forEach((record, ip) => {
       if (now > record.resetTime) {
         this.records.delete(ip)
       }
-    }
+    })
   }
 }
 

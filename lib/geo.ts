@@ -73,11 +73,18 @@ const ipRanges: { start: number; end: number; geo: GeoInfo }[] = [
 // IP 地址转数字
 function ipToNumber(ip: string): number {
   const parts = ip.split('.')
+  if (parts.length !== 4) return 0
+  
+  const nums = parts.map(part => {
+    const num = parseInt(part, 10)
+    return isNaN(num) || num < 0 || num > 255 ? 0 : num
+  })
+  
   return (
-    (parseInt(parts[0]) << 24) +
-    (parseInt(parts[1]) << 16) +
-    (parseInt(parts[2]) << 8) +
-    parseInt(parts[3])
+    (nums[0] << 24) +
+    (nums[1] << 16) +
+    (nums[2] << 8) +
+    nums[3]
   ) >>> 0
 }
 
@@ -89,6 +96,7 @@ export function getGeoByIP(ip: string): GeoInfo {
   }
 
   const ipNum = ipToNumber(ip)
+  if (ipNum === 0) return { country: '未知', province: '未知', city: '未知' }
   
   for (const range of ipRanges) {
     if (ipNum >= range.start && ipNum <= range.end) {
