@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { prisma } from '@/lib/prisma'
 
 interface PageProps {
   params: {
@@ -8,40 +9,25 @@ interface PageProps {
 
 export const dynamic = 'force-dynamic'
 
-// 使用 fetch 调用 API 而不是直接使用 Prisma
-async function getLink(shortCode: string) {
-  try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://private-traffic.byjr.ren'
-    const res = await fetch(`${baseUrl}/api/links/${shortCode}`, {
-      cache: 'no-store',
-    })
-    
-    if (!res.ok) {
-      return null
-    }
-    
-    const data = await res.json()
-    return data.link
-  } catch (error) {
-    console.error('获取链接失败:', error)
-    return null
-  }
-}
-
 export default async function SharePage({ params }: PageProps) {
-  const link = await getLink(params.shortCode)
-
-  if (!link || link.status !== 'ACTIVE') {
-    notFound()
+  let link = null
+  
+  try {
+    link = await prisma.shortLink.findUnique({
+      where: { shortCode: params.shortCode },
+    })
+  } catch (error) {
+    console.error('数据库查询失败:', error)
   }
 
-  const title = link.title || '点击添加微信好友'
-  const description = link.description || '一对一专属客服服务'
+  // 如果链接不存在或已失效，显示默认内容（不跳转）
+  const title = link?.title || '点击添加微信好友'
+  const description = link?.description || '一对一专属客服服务'
   const baseUrl = 'https://private-traffic.byjr.ren'
-  const image = link.coverImage 
+  const image = link?.coverImage 
     ? (link.coverImage.startsWith('http') ? link.coverImage : `${baseUrl}${link.coverImage}`) 
     : `${baseUrl}/default-card.png`
-  const targetUrl = `/l/${params.shortCode}`
+  const targetUrl = link ? `/l/${params.shortCode}` : '/'
 
   return (
     <html lang="zh-CN">
@@ -69,8 +55,8 @@ export default async function SharePage({ params }: PageProps) {
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={image} />
         
-        {/* 3秒后跳转到落地页 */}
-        <meta httpEquiv="refresh" content={`3;url=${targetUrl}`} />
+        {/* 3秒后跳转到落地页（仅当链接有效时） */}
+        {link && <meta httpEquiv="refresh" content={`3;url=${targetUrl}`} />}
       </head>
       <body style={{ 
         margin: 0, 
@@ -126,33 +112,41 @@ export default async function SharePage({ params }: PageProps) {
             {description}
           </p>
           
-          {/* 加载动画 */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            color: '#999',
-            fontSize: '14px'
-          }}>
-            <div style={{
-              width: '16px',
-              height: '16px',
-              border: '2px solid #f3f3f3',
-              borderTop: '2px solid #667eea',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }} />
-            <span>正在跳转...</span>
-          </div>
-          
-          <p style={{ 
-            fontSize: '12px', 
-            color: '#999', 
-            marginTop: '20px'
-          }}>
-            如果没有自动跳转，<a href={targetUrl} style={{ color: '#667eea', textDecoration: 'none' }}>请点击这里</a>
-          </p>
+          {link ? (
+            <>
+              {/* 加载动画 */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                color: '#999',
+                fontSize: '14px'
+              }}>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid #f3f3f3',
+                  borderTop: '2px solid #667eea',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                <span>正在跳转...</span>
+              </div>
+              
+              <p style={{ 
+                fontSize: '12px', 
+                color: '#999', 
+                marginTop: '20px'
+              }}>
+                如果没有自动跳转，<a href={targetUrl} style={{ color: '#667eea', textDecoration: 'none' }}>请点击这里</a>
+              </p>
+            </>
+          ) : (
+            <p style={{ fontSize: '14px', color: '#999' }}>
+              链接不存在或已失效
+            </p>
+          )}
         </div>
         
         <style dangerouslySetInnerHTML={{ __html: `
