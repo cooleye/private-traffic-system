@@ -36,6 +36,23 @@ const membershipBenefits: Record<string, string[]> = {
   YEARLY: ['无限短链接创建', '高级统计分析', '模板库使用', 'API接口访问', '专属客服支持', '自定义域名'],
 }
 
+// 使用 DiceBear API 生成头像
+function generateAvatarUrl(seed: string, style: string = 'avataaars'): string {
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1d4f9`
+}
+
+// 头像风格选项
+const avatarStyles = [
+  { value: 'avataaars', label: '卡通人物' },
+  { value: 'bottts', label: '机器人' },
+  { value: 'fun-emoji', label: '表情符号' },
+  { value: 'identicon', label: '几何图案' },
+  { value: 'initials', label: '首字母' },
+  { value: 'lorelei', label: '洛丽塔' },
+  { value: 'notionists', label: '简约风格' },
+  { value: 'pixel-art', label: '像素艺术' },
+]
+
 // 头像组件，处理加载错误
 function Avatar({ src, alt, fallback }: { src?: string; alt: string; fallback: string }) {
   const [error, setError] = useState(false)
@@ -71,7 +88,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
-  const [editForm, setEditForm] = useState({ name: '', avatar: '' })
+  const [editForm, setEditForm] = useState({ name: '', avatarStyle: 'avataaars' })
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -92,14 +109,25 @@ export default function ProfilePage() {
     if (userData) {
       const parsed = JSON.parse(userData)
       setUser(parsed)
-      setEditForm({ name: parsed.name || '', avatar: parsed.avatar || '' })
+      // 从现有 avatar URL 中提取风格，如果没有则使用默认
+      const currentStyle = parsed.avatar?.includes('dicebear') 
+        ? new URL(parsed.avatar).pathname.split('/')[2] 
+        : 'avataaars'
+      setEditForm({ name: parsed.name || '', avatarStyle: currentStyle })
     }
     setLoading(false)
   }, [router])
 
+  const getAvatarUrl = (style: string, seed: string) => {
+    return generateAvatarUrl(seed, style)
+  }
+
   const handleUpdateProfile = async () => {
     const token = localStorage.getItem('token')
     if (!token) return
+
+    // 生成新的头像 URL
+    const avatarUrl = getAvatarUrl(editForm.avatarStyle, user?.email || 'user')
 
     try {
       const res = await fetch('/api/user/profile', {
@@ -108,7 +136,10 @@ export default function ProfilePage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify({
+          name: editForm.name,
+          avatar: avatarUrl,
+        }),
       })
 
       if (res.ok) {
@@ -235,28 +266,6 @@ export default function ProfilePage() {
               {isEditing ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">头像URL</label>
-                    <input
-                      type="text"
-                      value={editForm.avatar}
-                      onChange={(e) => setEditForm({ ...editForm, avatar: e.target.value })}
-                      placeholder="https://example.com/avatar.jpg"
-                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                    {editForm.avatar && (
-                      <div className="mt-2 flex items-center gap-3">
-                        <span className="text-sm text-gray-500">预览：</span>
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 relative">
-                          <Avatar
-                            src={editForm.avatar}
-                            alt="头像预览"
-                            fallback={getInitials(editForm.name || user.email)}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div>
                     <label className="block text-sm font-medium mb-1">昵称</label>
                     <input
                       type="text"
@@ -265,6 +274,31 @@ export default function ProfilePage() {
                       placeholder="请输入昵称"
                       className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">选择头像风格</label>
+                    <div className="grid grid-cols-4 gap-3">
+                      {avatarStyles.map((style) => (
+                        <button
+                          key={style.value}
+                          onClick={() => setEditForm({ ...editForm, avatarStyle: style.value })}
+                          className={`p-3 rounded-lg border-2 transition-all ${
+                            editForm.avatarStyle === style.value
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'border-gray-200 hover:border-purple-300'
+                          }`}
+                        >
+                          <div className="w-12 h-12 mx-auto mb-2 rounded-full overflow-hidden bg-gray-100 relative">
+                            <Avatar
+                              src={getAvatarUrl(style.value, user.email)}
+                              alt={style.label}
+                              fallback={getInitials(user.email)}
+                            />
+                          </div>
+                          <p className="text-xs text-center">{style.label}</p>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="flex gap-3 pt-2">
                     <Button
@@ -277,7 +311,10 @@ export default function ProfilePage() {
                       variant="outline"
                       onClick={() => {
                         setIsEditing(false)
-                        setEditForm({ name: user.name || '', avatar: user.avatar || '' })
+                        const currentStyle = user.avatar?.includes('dicebear') 
+                          ? new URL(user.avatar).pathname.split('/')[2] 
+                          : 'avataaars'
+                        setEditForm({ name: user.name || '', avatarStyle: currentStyle })
                       }}
                     >
                       取消
