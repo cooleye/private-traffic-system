@@ -118,7 +118,9 @@ export default function ProfilePage() {
     setLoading(false)
   }, [router])
 
-  const getAvatarUrl = (style: string, seed: string) => {
+  const getAvatarUrl = (style: string, name: string) => {
+    // 使用昵称作为种子生成头像，这样修改昵称时头像也会变化
+    const seed = name || user?.email || 'user'
     return generateAvatarUrl(seed, style)
   }
 
@@ -126,8 +128,8 @@ export default function ProfilePage() {
     const token = localStorage.getItem('token')
     if (!token) return
 
-    // 生成新的头像 URL
-    const avatarUrl = getAvatarUrl(editForm.avatarStyle, user?.email || 'user')
+    // 生成新的头像 URL，使用昵称作为种子
+    const avatarUrl = getAvatarUrl(editForm.avatarStyle, editForm.name)
 
     try {
       const res = await fetch('/api/user/profile', {
@@ -290,9 +292,9 @@ export default function ProfilePage() {
                         >
                           <div className="w-12 h-12 mx-auto mb-2 rounded-full overflow-hidden bg-gray-100 relative">
                             <Avatar
-                              src={getAvatarUrl(style.value, user.email)}
+                              src={getAvatarUrl(style.value, editForm.name)}
                               alt={style.label}
-                              fallback={getInitials(user.email)}
+                              fallback={getInitials(editForm.name || user.email)}
                             />
                           </div>
                           <p className="text-xs text-center">{style.label}</p>
