@@ -66,29 +66,29 @@ export default function ShareCardPreview({
 
       {/* 卡片预览 */}
       <div className="space-y-4">
-        {/* 抖音样式 */}
+        {/* 抖音样式 - 横向小卡片 */}
         {activeTab === 'douyin' && (
           <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200">
-            <div className="relative">
-              <img
-                src={displayImage}
-                alt={displayTitle}
-                className="w-full h-40 object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/default-card.png'
-                }}
-              />
-              <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                {platformIcons[platform]} {platformNames[platform]}
+            <div className="flex">
+              {/* 左侧正方形封面图 */}
+              <div className="w-24 h-24 flex-shrink-0 bg-gray-100 relative">
+                <img
+                  src={displayImage}
+                  alt={displayTitle}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/default-card.png'
+                  }}
+                />
               </div>
-            </div>
-            <div className="p-3">
-              <h4 className="font-medium text-gray-900 line-clamp-2">{displayTitle}</h4>
-              <p className="text-sm text-gray-500 mt-1 line-clamp-2">{displayDesc}</p>
-              <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
-                <span>私域引流系统</span>
-                <span>·</span>
-                <span>点击打开</span>
+              {/* 右侧标题和描述 */}
+              <div className="flex-1 p-3 min-w-0">
+                <h4 className="font-medium text-gray-900 text-sm line-clamp-1">{displayTitle}</h4>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{displayDesc}</p>
+                <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
+                  <span>{platformIcons[platform]}</span>
+                  <span className="truncate">{platformNames[platform]}</span>
+                </div>
               </div>
             </div>
           </div>
