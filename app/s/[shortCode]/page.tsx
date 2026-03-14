@@ -1,4 +1,3 @@
-import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 
 interface PageProps {
@@ -9,10 +8,28 @@ interface PageProps {
 
 export const dynamic = 'force-dynamic'
 
+// 使用 fetch 调用 API 而不是直接使用 Prisma
+async function getLink(shortCode: string) {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://private-traffic.byjr.ren'
+    const res = await fetch(`${baseUrl}/api/links/${shortCode}`, {
+      cache: 'no-store',
+    })
+    
+    if (!res.ok) {
+      return null
+    }
+    
+    const data = await res.json()
+    return data.link
+  } catch (error) {
+    console.error('获取链接失败:', error)
+    return null
+  }
+}
+
 export default async function SharePage({ params }: PageProps) {
-  const link = await prisma.shortLink.findUnique({
-    where: { shortCode: params.shortCode },
-  })
+  const link = await getLink(params.shortCode)
 
   if (!link || link.status !== 'ACTIVE') {
     notFound()
@@ -83,13 +100,11 @@ export default async function SharePage({ params }: PageProps) {
             overflow: 'hidden',
             background: '#f0f0f0'
           }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={image} 
               alt={title}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = `${baseUrl}/default-card.png`
-              }}
             />
           </div>
           
