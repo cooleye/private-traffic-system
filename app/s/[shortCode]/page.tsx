@@ -21,8 +21,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = link.title || '点击添加微信好友'
   const description = link.description || '一对一专属客服服务'
-  const image = link.coverImage || '/default-card.png'
-  const url = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/s/${params.shortCode}`
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://private-traffic-system.vercel.app'
+  const image = link.coverImage ? (link.coverImage.startsWith('http') ? link.coverImage : `${baseUrl}${link.coverImage}`) : `${baseUrl}/default-card.png`
+  const url = `${baseUrl}/s/${params.shortCode}`
 
   return {
     title,
@@ -49,30 +50,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       images: [image],
     },
-    // 抖音
     other: {
-      // 抖音
-      'tt:card': 'summary_large_image',
-      'tt:title': title,
-      'tt:description': description,
-      'tt:image': image,
-      // 微信
-      'wx:title': title,
-      'wx:description': description,
-      'wx:image': image,
-      // QQ
-      'qq:title': title,
-      'qq:description': description,
-      'qq:image': image,
-      // 微博
-      'wb:card': 'summary_large_image',
-      'wb:title': title,
-      'wb:description': description,
-      'wb:image': image,
-      // 小红书
-      'xh:title': title,
-      'xh:description': description,
-      'xh:image': image,
+      'og:image:width': '1200',
+      'og:image:height': '630',
     },
   }
 }
