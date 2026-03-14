@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = link.title || '点击添加微信好友'
   const description = link.description || '一对一专属客服服务'
-  const baseUrl = 'https://byjr.ren'
+  const baseUrl = 'https://private-traffic.byjr.ren'
   const image = link.coverImage 
     ? (link.coverImage.startsWith('http') ? link.coverImage : `${baseUrl}${link.coverImage}`) 
     : `${baseUrl}/default-card.png`
