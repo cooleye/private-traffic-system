@@ -36,9 +36,14 @@ const membershipBenefits: Record<string, string[]> = {
   YEARLY: ['无限短链接创建', '高级统计分析', '模板库使用', 'API接口访问', '专属客服支持', '自定义域名'],
 }
 
-// 使用 DiceBear API 生成头像
-function generateAvatarUrl(seed: string, style: string = 'avataaars'): string {
+// 使用 DiceBear API 生成头像（主方案）
+function generateDiceBearUrl(seed: string, style: string = 'avataaars'): string {
   return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1d4f9`
+}
+
+// 使用 UI Avatars 生成头像（备选方案）
+function generateUIAvatarsUrl(name: string): string {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128`
 }
 
 // 头像风格选项
@@ -53,12 +58,36 @@ const avatarStyles = [
   { value: 'pixel-art', label: '像素艺术' },
 ]
 
-// 头像组件，处理加载错误
-function Avatar({ src, alt, fallback }: { src?: string; alt: string; fallback: string }) {
+// 头像组件，支持主备方案自动切换
+function Avatar({ 
+  src, 
+  alt, 
+  fallback, 
+  backupSrc 
+}: { 
+  src?: string; 
+  alt: string; 
+  fallback: string;
+  backupSrc?: string;
+}) {
   const [error, setError] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [currentSrc, setCurrentSrc] = useState(src)
 
-  if (!src || error) {
+  // 如果主方案失败，切换到备选方案
+  const handleError = () => {
+    if (backupSrc && currentSrc !== backupSrc) {
+      // 尝试备选方案
+      setCurrentSrc(backupSrc)
+      setLoading(true)
+    } else {
+      // 备选方案也失败，显示 fallback
+      setError(true)
+      setLoading(false)
+    }
+  }
+
+  if (!currentSrc || error) {
     return <span>{fallback}</span>
   }
 
@@ -70,14 +99,11 @@ function Avatar({ src, alt, fallback }: { src?: string; alt: string; fallback: s
         </div>
       )}
       <img
-        src={src}
+        src={currentSrc}
         alt={alt}
         className={`w-full h-full object-cover transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}
         onLoad={() => setLoading(false)}
-        onError={() => {
-          setError(true)
-          setLoading(false)
-        }}
+        onError={handleError}
       />
     </>
   )
@@ -118,18 +144,20 @@ export default function ProfilePage() {
     setLoading(false)
   }, [router])
 
-  const getAvatarUrl = (style: string, name: string) => {
-    // 使用昵称作为种子生成头像，这样修改昵称时头像也会变化
+  // 生成头像 URL（主方案：DiceBear，备选：UI Avatars）
+  const getAvatarUrls = (style: string, name: string) => {
     const seed = name || user?.email || 'user'
-    return generateAvatarUrl(seed, style)
+    const primaryUrl = generateDiceBearUrl(seed, style)
+    const backupUrl = generateUIAvatarsUrl(seed)
+    return { primaryUrl, backupUrl }
   }
 
   const handleUpdateProfile = async () => {
     const token = localStorage.getItem('token')
     if (!token) return
 
-    // 生成新的头像 URL，使用昵称作为种子
-    const avatarUrl = getAvatarUrl(editForm.avatarStyle, editForm.name)
+    // 生成新的头像 URL（主方案）
+    const { primaryUrl } = getAvatarUrls(editForm.avatarStyle, editForm.name)
 
     try {
       const res = await fetch('/api/user/profile', {
@@ -140,7 +168,7 @@ export default function ProfilePage() {
         },
         body: JSON.stringify({
           name: editForm.name,
-          avatar: avatarUrl,
+          avatar: primaryUrl,
         }),
       })
 
@@ -280,26 +308,30 @@ export default function ProfilePage() {
                   <div>
                     <label className="block text-sm font-medium mb-2">选择头像风格</label>
                     <div className="grid grid-cols-4 gap-3">
-                      {avatarStyles.map((style) => (
-                        <button
-                          key={style.value}
-                          onClick={() => setEditForm({ ...editForm, avatarStyle: style.value })}
-                          className={`p-3 rounded-lg border-2 transition-all ${
-                            editForm.avatarStyle === style.value
-                              ? 'border-purple-500 bg-purple-50'
-                              : 'border-gray-200 hover:border-purple-300'
-                          }`}
-                        >
-                          <div className="w-12 h-12 mx-auto mb-2 rounded-full overflow-hidden bg-gray-100 relative">
-                            <Avatar
-                              src={getAvatarUrl(style.value, editForm.name)}
-                              alt={style.label}
-                              fallback={getInitials(editForm.name || user.email)}
-                            />
-                          </div>
-                          <p className="text-xs text-center">{style.label}</p>
-                        </button>
-                      ))}
+                      {avatarStyles.map((style) => {
+                        const { primaryUrl, backupUrl } = getAvatarUrls(style.value, editForm.name)
+                        return (
+                          <button
+                            key={style.value}
+                            onClick={() => setEditForm({ ...editForm, avatarStyle: style.value })}
+                            className={`p-3 rounded-lg border-2 transition-all ${
+                              editForm.avatarStyle === style.value
+                                ? 'border-purple-500 bg-purple-50'
+                                : 'border-gray-200 hover:border-purple-300'
+                            }`}
+                          >
+                            <div className="w-12 h-12 mx-auto mb-2 rounded-full overflow-hidden bg-gray-100 relative">
+                              <Avatar
+                                src={primaryUrl}
+                                backupSrc={backupUrl}
+                                alt={style.label}
+                                fallback={getInitials(editForm.name || user.email)}
+                              />
+                            </div>
+                            <p className="text-xs text-center">{style.label}</p>
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                   <div className="flex gap-3 pt-2">
@@ -326,11 +358,17 @@ export default function ProfilePage() {
               ) : (
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-medium overflow-hidden relative">
-                    <Avatar
-                      src={user.avatar}
-                      alt={user.name || user.email}
-                      fallback={getInitials(user.name || user.email)}
-                    />
+                    {(() => {
+                      const { primaryUrl, backupUrl } = getAvatarUrls('avataaars', user.name || user.email)
+                      return (
+                        <Avatar
+                          src={user.avatar || primaryUrl}
+                          backupSrc={backupUrl}
+                          alt={user.name || user.email}
+                          fallback={getInitials(user.name || user.email)}
+                        />
+                      )
+                    })()}
                   </div>
                   <div>
                     <p className="text-lg font-medium">{user.name || '未设置昵称'}</p>
